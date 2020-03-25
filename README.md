@@ -6,7 +6,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/henryleduc/dyndns.svg)](https://github.com/henryleduc/dyndns/issues)
 [![license](https://img.shields.io/github/license/henryleduc/dyndns.svg?maxAge=2592000)](https://github.com/henryleduc/dyndns/LICENSE)
 
-Cloudflare DynamicDNS updater for A records.
+Cloudflare DynamicDNS Tool for using Cloudflare DynamicDNS as a DDNS provider..
 
 <img alt="Cloudflare Logo" src="https://www.cloudflare.com/img/logo-cloudflare-dark.svg" width="250">
 
