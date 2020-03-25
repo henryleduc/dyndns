@@ -3,7 +3,6 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/henryleduc/dyndns)](https://goreportcard.com/report/github.com/henryleduc/dyndns)
 [![Documentation](https://godoc.org/github.com/henryleduc/dyndns?status.svg)](http://godoc.org/github.com/henryleduc/dyndns)
 [![Coverage Status](https://coveralls.io/repos/github/henryleduc/dyndns/badge.svg?branch=master)](https://coveralls.io/github/henryleduc/dyndns?branch=master)
-[![GitHub issues](https://img.shields.io/github/issues/henryleduc/dyndns.svg)](https://github.com/henryleduc/dyndns/issues)
 [![license](https://img.shields.io/github/license/henryleduc/dyndns.svg?maxAge=2592000)](https://github.com/henryleduc/dyndns/LICENSE)
 
 Cloudflare DynamicDNS Tool for using Cloudflare DynamicDNS as a DDNS provider.
