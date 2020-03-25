@@ -1,4 +1,4 @@
-# dyndns 
+# Go DynDNS
 [![Build](https://api.travis-ci.com/henryleduc/dyndns.svg?branch=master)](https://travis-ci.com/github/henryleduc/dyndns)
 [![Go Report Card](https://goreportcard.com/badge/github.com/henryleduc/dyndns)](https://goreportcard.com/report/github.com/henryleduc/dyndns)
 [![Documentation](https://godoc.org/github.com/henryleduc/dyndns?status.svg)](http://godoc.org/github.com/henryleduc/dyndns)
