@@ -35,12 +35,11 @@ func NewClient(apiEmail, apiKey string, zoneID uuid.UUID) Client {
 	}
 }
 
-// GetAllZones will return all zones for the given ZoneID on the client
+// GetAllZones will return all zones for the user
 func (c *Client) GetAllZones() (*http.Response, error) {
 	httpClient := &http.Client{}
 
-	reqURI := fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records", c.zoneID.String())
-	req, err := http.NewRequest("GET", reqURI, nil)
+	req, err := http.NewRequest("GET", "https://api.cloudflare.com/client/v4/zones", nil)
 	if err != nil {
 		log.Fatalf("failed to create request, possibly invalid zoneID (%v)", c.zoneID)
 		return nil, err
@@ -119,6 +118,25 @@ func (c *Client) GetDNSRecord(recordID uuid.UUID) (*http.Response, error) {
 	return resp, nil
 }
 
+// GetUser will verify that the current client credentials are valid.
+func (c *Client) GetUser() (*http.Response, error) {
+	httpClient := &http.Client{}
+
+	req, err := http.NewRequest("GET", "https://api.cloudflare.com/client/v4/user", nil)
+	if err != nil {
+		log.Fatal("failed to create request")
+		return nil, err
+	}
+
+	c.addDefaultHeaders(req)
+	resp, err := execRequest(httpClient, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 func (c *Client) addDefaultHeaders(req *http.Request) {
 	req.Header.Add("X-Auth-Email", c.apiEmail)
 	req.Header.Add("X-Auth-Key", c.apiKey)
@@ -132,9 +150,8 @@ func execRequest(httpClient *http.Client, req *http.Request) (*http.Response, er
 		return nil, err
 	}
 
-	if resp.StatusCode%100 != 2 {
-		var body []byte
-		log.Fatalf("request was not successful (%s): %v", resp.Status, body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		log.Fatalf("request was not successful (%s)", resp.Status)
 		return nil, err
 	}
 
