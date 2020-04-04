@@ -4,9 +4,11 @@
 *.dll
 *.so
 *.dylib
+
+# IDE related files to ignore
+.vscode/
+.idea/
 *.iml
-.vscode
-.idea
 
 # Test binary, built with `go test -c`
 *.test
