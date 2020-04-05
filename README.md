@@ -20,7 +20,7 @@ This is all done through the Cloudflare APIs so no need to worry about the stabi
 
 # Getting Started
 To install this project use:
-`go get github.com/henryleduc/dyndns/cmd/ddns-updater`
+`go get github.com/henryleduc/dyndns/cmd/main`
 
 You can also use this project as a DDNS client inside your project or application.
 
