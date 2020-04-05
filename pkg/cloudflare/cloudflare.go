@@ -2,6 +2,7 @@ package cloudflare
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,40 +20,41 @@ type Client struct {
 
 // DNSRecord is the Cloudflare API DNS Record data used by PutDnsRecord
 type DNSRecord struct {
+	ID         string `json:"id,omitempty"`
 	RecordType string `json:"type"`
-	Name       string
-	Content    string
-	TTL        int
-	Proxied    bool
+	Name       string `json:"name"`
+	IP         string `json:"content"`
+	TTL        int    `json:"ttl"`
+	Proxied    bool   `json:"proxied"`
+}
+
+type dnsRecordResponse struct {
+	Result DNSRecord
+}
+type allDNSRecordResponse struct {
+	Result []DNSRecord
 }
 
 // NewClient will return a new cloudflare client
-func NewClient(apiEmail, apiKey string, zoneID uuid.UUID) Client {
-	return Client{
+func NewClient(apiEmail, apiKey string, zoneID uuid.UUID) (Client, error) {
+	client := Client{
 		apiEmail: apiEmail,
 		apiKey:   apiKey,
 		zoneID:   zoneID,
 	}
-}
 
-// GetAllZones will return all zones for the user
-func (c *Client) GetAllZones() (*http.Response, error) {
-	httpClient := &http.Client{}
-
-	req, err := http.NewRequest("GET", "https://api.cloudflare.com/client/v4/zones", nil)
+	resp, err := client.GetZone()
 	if err != nil {
-		log.Fatalf("failed to create request, possibly invalid zoneID (%v)", c.zoneID)
-		return nil, err
+		log.Fatal("failed to find zone given for client")
+		return Client{}, err
 	}
 
-	c.addDefaultHeaders(req)
-	resp, err := execRequest(httpClient, req)
-	if err != nil {
-		return nil, err
+	// TODO: Refactor once GetZone has been changed to return zone data...
+	if resp.StatusCode != 200 {
+		return Client{}, errors.New("failed to get zone when creating client, X-API-Key, X-API-Email or ZoneID may be incorrect")
 	}
 
-	// TODO: return response body json rather than http.Response
-	return resp, nil
+	return client, nil
 }
 
 // GetZone will return the details of a zone by it's id
@@ -102,8 +104,8 @@ func (c *Client) PutDNSRecord(recordID uuid.UUID, dnsRecord DNSRecord) (*http.Re
 	return resp, nil
 }
 
-// GetDNSRecord will get by a given dns record id
-func (c *Client) GetAllDNSRecords() (*http.Response, error) {
+// GetAllDNSRecords will return all the dns records for the current zone
+func (c *Client) GetAllDNSRecords() ([]DNSRecord, error) {
 	httpClient := &http.Client{}
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records", stripUUID(c.zoneID)), nil)
@@ -118,48 +120,43 @@ func (c *Client) GetAllDNSRecords() (*http.Response, error) {
 		return nil, err
 	}
 
-	// TODO: return response body json rather than http.Response
-	return resp, nil
+	jsonBody := &allDNSRecordResponse{}
+	err = json.NewDecoder(resp.Body).Decode(jsonBody)
+	if err != nil {
+		log.Fatalf("failed to unmarshal json response")
+		return []DNSRecord{}, err
+	}
+
+	if len(jsonBody.Result) <= 0 {
+		return []DNSRecord{}, errors.New("error no dns records found for zone")
+	}
+
+	return jsonBody.Result, nil
 }
 
 // GetDNSRecord will get by a given dns record id
-func (c *Client) GetDNSRecord(recordID uuid.UUID) (*http.Response, error) {
+func (c *Client) GetDNSRecord(recordID uuid.UUID) (DNSRecord, error) {
 	httpClient := &http.Client{}
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", stripUUID(c.zoneID), stripUUID(recordID)), nil)
 	if err != nil {
 		log.Fatalf("failed to create request, possibly invalid zoneID (%v) or DNS record ID (%v)", c.zoneID, recordID)
-		return nil, err
+		return DNSRecord{}, err
 	}
 
 	c.addDefaultHeaders(req)
 	resp, err := execRequest(httpClient, req)
 	if err != nil {
-		return nil, err
+		return DNSRecord{}, err
 	}
 
-	// TODO: return response body json rather than http.Response
-	return resp, nil
-}
-
-// GetUser will verify that the current client credentials are valid.
-func (c *Client) GetUser() (*http.Response, error) {
-	httpClient := &http.Client{}
-
-	req, err := http.NewRequest("GET", "https://api.cloudflare.com/client/v4/user", nil)
+	jsonBody := &dnsRecordResponse{}
+	err = json.NewDecoder(resp.Body).Decode(jsonBody)
 	if err != nil {
-		log.Fatal("failed to create request")
-		return nil, err
+		log.Fatalf("failed to unmarshal json response")
+		return DNSRecord{}, err
 	}
-
-	c.addDefaultHeaders(req)
-	resp, err := execRequest(httpClient, req)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: return response body json rather than http.Response
-	return resp, nil
+	return jsonBody.Result, nil
 }
 
 func (c *Client) addDefaultHeaders(req *http.Request) {
