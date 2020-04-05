@@ -73,7 +73,7 @@ func (c *Client) GetZone() (*http.Response, error) {
 		return nil, err
 	}
 
-	// TODO: return response body json rather than http.Response
+	// TODO: return response body json rather than http.Response from GetZone
 	return resp, nil
 }
 
@@ -100,7 +100,7 @@ func (c *Client) PutDNSRecord(recordID uuid.UUID, dnsRecord DNSRecord) (*http.Re
 		return nil, err
 	}
 
-	// TODO: return response body json rather than http.Response
+	// TODO: return response body json rather than http.Response from PutDNSRecord
 	return resp, nil
 }
 
