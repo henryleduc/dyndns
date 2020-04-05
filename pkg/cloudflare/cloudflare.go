@@ -51,6 +51,7 @@ func (c *Client) GetAllZones() (*http.Response, error) {
 		return nil, err
 	}
 
+	// TODO: return response body json rather than http.Response
 	return resp, nil
 }
 
@@ -58,7 +59,7 @@ func (c *Client) GetAllZones() (*http.Response, error) {
 func (c *Client) GetZone() (*http.Response, error) {
 	httpClient := &http.Client{}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s", c.zoneID.String()), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s", stripUUID(c.zoneID)), nil)
 	if err != nil {
 		log.Fatalf("failed to create request, possibly invalid zoneID (%v)", c.zoneID)
 		return nil, err
@@ -70,6 +71,7 @@ func (c *Client) GetZone() (*http.Response, error) {
 		return nil, err
 	}
 
+	// TODO: return response body json rather than http.Response
 	return resp, nil
 }
 
@@ -84,7 +86,7 @@ func (c *Client) PutDNSRecord(recordID uuid.UUID, dnsRecord DNSRecord) (*http.Re
 	}
 	body := strings.NewReader(string(dnsRecordJSON))
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", c.zoneID.String(), recordID.String()), body)
+	req, err := http.NewRequest("PUT", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", stripUUID(c.zoneID), stripUUID(recordID)), body)
 	if err != nil {
 		log.Fatalf("failed to create request, possibly invalid zoneID (%v)", c.zoneID)
 		return nil, err
@@ -96,6 +98,27 @@ func (c *Client) PutDNSRecord(recordID uuid.UUID, dnsRecord DNSRecord) (*http.Re
 		return nil, err
 	}
 
+	// TODO: return response body json rather than http.Response
+	return resp, nil
+}
+
+// GetDNSRecord will get by a given dns record id
+func (c *Client) GetAllDNSRecords() (*http.Response, error) {
+	httpClient := &http.Client{}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records", stripUUID(c.zoneID)), nil)
+	if err != nil {
+		log.Fatalf("failed to create request, possibly invalid zoneID (%v)", c.zoneID)
+		return nil, err
+	}
+
+	c.addDefaultHeaders(req)
+	resp, err := execRequest(httpClient, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: return response body json rather than http.Response
 	return resp, nil
 }
 
@@ -103,7 +126,7 @@ func (c *Client) PutDNSRecord(recordID uuid.UUID, dnsRecord DNSRecord) (*http.Re
 func (c *Client) GetDNSRecord(recordID uuid.UUID) (*http.Response, error) {
 	httpClient := &http.Client{}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", c.zoneID.String(), recordID.String()), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", stripUUID(c.zoneID), stripUUID(recordID)), nil)
 	if err != nil {
 		log.Fatalf("failed to create request, possibly invalid zoneID (%v) or DNS record ID (%v)", c.zoneID, recordID)
 		return nil, err
@@ -115,6 +138,7 @@ func (c *Client) GetDNSRecord(recordID uuid.UUID) (*http.Response, error) {
 		return nil, err
 	}
 
+	// TODO: return response body json rather than http.Response
 	return resp, nil
 }
 
@@ -134,6 +158,7 @@ func (c *Client) GetUser() (*http.Response, error) {
 		return nil, err
 	}
 
+	// TODO: return response body json rather than http.Response
 	return resp, nil
 }
 
@@ -143,15 +168,19 @@ func (c *Client) addDefaultHeaders(req *http.Request) {
 	req.Header.Add("Content-Type", "application/json")
 }
 
+func stripUUID(id uuid.UUID) string {
+	return strings.ReplaceAll(id.String(), "-", "")
+}
+
 func execRequest(httpClient *http.Client, req *http.Request) (*http.Response, error) {
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		log.Fatalf("failed to execute request (%s): %v", resp.Status, err)
+		log.Fatalf("failed to execute request %s (%s): %v", resp.Request.URL.RequestURI(), resp.Status, err)
 		return nil, err
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		log.Fatalf("request was not successful (%s)", resp.Status)
+		log.Fatalf("failed to execute request %s (%s)", resp.Request.URL.RequestURI(), resp.Status)
 		return nil, err
 	}
 
